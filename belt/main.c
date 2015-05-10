@@ -15,49 +15,55 @@ typedef enum {
 
 #define LOCATION_COUNT 4
 
-static const int GPIO_IDS[] = {
+static const int GPIO_RAW_IDS[] = {
   12,
   183,
   13,
   182
 };
 
-static mraa_gpio_context gpios[LOCATION_COUNT];
+// MRAA pin ids (see http://iotdk.intel.com/docs/master/mraa/edison.html)
+static const int PWM_IDS[] = {
+  20,
+  21,
+  14,
+  0
+};
 
-static void init_gpios() {
+static mraa_pwm_context pwm[LOCATION_COUNT];
+
+static void init_pwms() {
  for (int i = 0; i < LOCATION_COUNT; i++) {
-    gpios[i] = mraa_gpio_init_raw(GPIO_IDS[i]);
-    if (!gpios[i]) { 
-      fprintf(stderr, "Error opening GPIO %d\n", GPIO_IDS[i]);
+    pwm[i] = mraa_pwm_init(PWM_IDS[i]);
+    if (!pwm[i]) { 
+      fprintf(stderr, "Error opening PWM %d\n", PWM_IDS[i]);
       exit(1);
     }
 
-    mraa_gpio_dir(gpios[i], MRAA_GPIO_OUT);
+    mraa_pwm_period_ms(pwm[i], 20);
+    mraa_pwm_enable(pwm[i], 1);
   }
 }
 
-static void close_gpios() {
+static void close_pwms() {
  for (int i = 0; i < LOCATION_COUNT; i++)
-    mraa_gpio_close(gpios[i]);
+    mraa_pwm_close(pwm[i]);
 }
 
 int main() {
   mraa_init();
-
-  init_gpios();
+  init_pwms();
 
   struct timespec sleep_time;
   sleep_time.tv_sec = 0;
   sleep_time.tv_nsec = 300 * 1000000L;
 
   for (int i = 0; i < LOCATION_COUNT; i++) {
-    mraa_gpio_write(gpios[i], 1);
-
+    mraa_pwm_write(pwm[i], 0.5f);
     nanosleep(&sleep_time, NULL);
-
-    mraa_gpio_write(gpios[i], 0);
+    mraa_pwm_write(pwm[i], 0.0f);
   }
 
-  close_gpios();
+  close_pwms();
   return 0;
 }
