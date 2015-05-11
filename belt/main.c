@@ -1,69 +1,33 @@
-#include <errno.h>
+#include <mraa.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
+#include <string.h>
 
-#include "mraa.h"
-
-typedef enum {
-  FRONT_LEFT,
-  FRONT_RIGHT,
-  BACK_RIGHT,
-  BACK_LEFT
-} locations_t;
-
-#define LOCATION_COUNT 4
-
-static const int GPIO_RAW_IDS[] = {
-  12,
-  183,
-  13,
-  182
-};
-
-// MRAA pin ids (see http://iotdk.intel.com/docs/master/mraa/edison.html)
-static const int PWM_IDS[] = {
-  20,
-  21,
-  14,
-  0
-};
-
-static mraa_pwm_context pwm[LOCATION_COUNT];
-
-static void init_pwms() {
- for (int i = 0; i < LOCATION_COUNT; i++) {
-    pwm[i] = mraa_pwm_init(PWM_IDS[i]);
-    if (!pwm[i]) { 
-      fprintf(stderr, "Error opening PWM %d\n", PWM_IDS[i]);
-      exit(1);
-    }
-
-    mraa_pwm_period_ms(pwm[i], 20);
-    mraa_pwm_enable(pwm[i], 1);
-  }
-}
-
-static void close_pwms() {
- for (int i = 0; i < LOCATION_COUNT; i++)
-    mraa_pwm_close(pwm[i]);
-}
+#include "vibe.h"
 
 int main() {
   mraa_init();
-  init_pwms();
+  vibe_init();
 
-  struct timespec sleep_time;
-  sleep_time.tv_sec = 0;
-  sleep_time.tv_nsec = 300 * 1000000L;
+  vibe_step_t front_left[] = {
+    { .value = 0.5f, .duration_ms = 200 },
+    { .value = 0.0f, .duration_ms = 200 },
+    { .value = 0.5f, .duration_ms = 200 },
+  };
 
-  for (int i = 0; i < LOCATION_COUNT; i++) {
-    mraa_pwm_write(pwm[i], 0.5f);
-    nanosleep(&sleep_time, NULL);
-    mraa_pwm_write(pwm[i], 0.0f);
-  }
+  vibe_step_t front_right[] = {
+    { .value = 0.0f, .duration_ms = 600 },
+    { .value = 0.5f, .duration_ms = 200 },
+  };
 
-  close_pwms();
+  vibe_t vibe;
+  memset(&vibe, 0, sizeof(vibe_t));
+  vibe.by_location[FRONT_LEFT].steps = front_left;
+  vibe.by_location[FRONT_LEFT].step_count = sizeof(front_left) / sizeof(vibe_step_t);
+  vibe.by_location[FRONT_RIGHT].steps = front_right;
+  vibe.by_location[FRONT_RIGHT].step_count = sizeof(front_right) / sizeof(vibe_step_t);
+
+  vibe_do(&vibe);
+
+  vibe_close();
   return 0;
 }

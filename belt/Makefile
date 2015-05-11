@@ -1,7 +1,13 @@
 CC=gcc
+SRCS=*.c
+CFLAGS=-Wall -Werror
 
-beltd: main.c
-	$(CC) main.c -o beltd -lmraa -std=gnu11
+ALL=*.c *.h
+
+DEFINE=VERBOSE_LOGGING
+
+beltd: $(ALL)
+	$(CC) $(SRCS) -o beltd -lmraa -lm -std=gnu11 -g -D $(DEFINE) $(CFLAGS)
 
 clean:
 	rm beltd
