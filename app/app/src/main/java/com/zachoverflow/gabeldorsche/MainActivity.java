@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
         super.onStart();
 
         Intent intent = new Intent(this, EndpointService.class);
+        startService(intent);
         bindService(intent, endpointServiceConnection, BIND_AUTO_CREATE);
     }
 

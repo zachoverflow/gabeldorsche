@@ -94,10 +94,7 @@ public class EndpointService extends Service {
                     pendingVibes.remove();
                 } catch (IOException e) {
                     Log.e(LOG_TAG, "Error writing peer socket: " + e.getMessage());
-                    try {
-                        socket.close();
-                    } catch (IOException ex) {}
-                    socket = null;
+                    closeSocket();
                 }
             }
         }
@@ -114,7 +111,18 @@ public class EndpointService extends Service {
 
     @Override
     public void onDestroy() {
+        closeSocket();
         dispatchLooper.quit();
+    }
+
+    private void closeSocket() {
+        try {
+            socket.close();
+        } catch (IOException ex) {
+            Log.e(LOG_TAG, "Error closing socket: " + ex.getMessage());
+        }
+
+        socket = null;
     }
 
     @Override
