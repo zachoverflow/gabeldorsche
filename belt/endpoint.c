@@ -76,6 +76,23 @@ static void on_connected(stream_reader_t *reader) {
       case OPCODE_VIBRATE:
         handle_vibrate(reader);
         break;
+      case OPCODE_ENABLE_WIFI:
+        LOG_INFO("%s enabling wifi", __func__);
+        if (system("rfkill unblock wifi") == -1) {
+          LOG_INFO("%s enabling wifi failed", __func__);
+        }
+
+        if (system("systemctl start wpa_supplicant.service") == -1) {
+          LOG_INFO("%s starting wpa_supplicant failed", __func__);
+        }
+
+        break;
+      case OPCODE_DISABLE_WIFI:
+        LOG_INFO("%s disabling wifi", __func__);
+        if (system("rfkill block wifi") == -1) {
+          LOG_INFO("%s disabling wifi failed", __func__);
+        }
+        break;
       default:
         LOG_ERROR("%s unknown opcode: %d", __func__, opcode);
         break;

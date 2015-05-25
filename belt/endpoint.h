@@ -16,5 +16,8 @@
 // 
 // Again, everything is in network byte order
 
+#define OPCODE_ENABLE_WIFI 2
+#define OPCODE_DISABLE_WIFI 3
+
 // Run the bluetooth service endpoint, blocking the calling thread
 void endpoint_run_blocking(void);

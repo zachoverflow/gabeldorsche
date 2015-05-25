@@ -24,8 +24,11 @@ public class EndpointService extends Service {
     private static final String LOG_TAG = EndpointService.class.getSimpleName();
 
     private static final int ACTION_VIBE = 0;
+    private static final int ACTION_SET_WIFI_ENABLED = 1;
 
     private static final byte OPCODE_VIBRATE = 1;
+    private static final byte OPCODE_ENABLE_WIFI = 2;
+    private static final byte OPCODE_DISABLE_WIFI = 3;
 
     private static final UUID GABELDORSCHE_UUID = UUID.fromString("9bd5b148-9249-542a-43be-d1b5f073f928");
 
@@ -54,13 +57,22 @@ public class EndpointService extends Service {
                     pendingVibes.add((Vibe)message.obj);
                     submitPendingVibes();
                     break;
+                case ACTION_SET_WIFI_ENABLED:
+                    ByteBuffer buffer = ByteBuffer.allocate(1);
+                    boolean enable = (boolean)message.obj;
+                    buffer.put(enable ? OPCODE_ENABLE_WIFI : OPCODE_DISABLE_WIFI);
+
+                    ensureSocketUp();
+                    boolean sent = sendByteBuffer(buffer);
+                    Log.i(LOG_TAG, "Setting wifi enabled: " + enable + " sent: " + sent);
+                    break;
                 default:
                     Log.e(LOG_TAG, "Unexpcted message: " + message.what);
                     break;
             }
         }
 
-        private void submitPendingVibes() {
+        private void ensureSocketUp() {
             if (socket == null) {
                 // TODO(zachoverflow): don't assume the device is the one with "edison" in it
                 BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
@@ -81,6 +93,25 @@ public class EndpointService extends Service {
                     Log.e(LOG_TAG, "Error opening socket to peer: " + e.getMessage());
                 }
             }
+        }
+
+        private boolean sendByteBuffer(ByteBuffer buffer) {
+             try {
+                 OutputStream outStream = socket.getOutputStream();
+                 outStream.write(buffer.array(), 0, buffer.position());
+                 outStream.flush();
+
+                 return true;
+             } catch (IOException e) {
+                 Log.e(LOG_TAG, "Error writing peer socket: " + e.getMessage());
+                 closeSocket();
+             }
+
+            return false;
+        }
+
+        private void submitPendingVibes() {
+            ensureSocketUp();
 
             while (pendingVibes.size() > 0) {
                 Vibe vibe = pendingVibes.element();
@@ -89,16 +120,8 @@ public class EndpointService extends Service {
                 buffer.put(OPCODE_VIBRATE);
                 vibe.serializeTo(buffer);
 
-                try {
-                    OutputStream outStream = socket.getOutputStream();
-                    outStream.write(buffer.array(), 0, buffer.position());
-                    outStream.flush();
-
+                if (sendByteBuffer(buffer))
                     pendingVibes.remove();
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, "Error writing peer socket: " + e.getMessage());
-                    closeSocket();
-                }
             }
         }
     }
@@ -144,6 +167,10 @@ public class EndpointService extends Service {
             Vibe vibe = notificationOracle.generateVibeFor(notification);
             if (vibe != null)
                 sendVibe(vibe);
+        }
+
+        public void setWifiEnabled(boolean value) {
+            dispatchHandler.sendMessage((dispatchHandler.obtainMessage(ACTION_SET_WIFI_ENABLED, value)));
         }
     }
 }

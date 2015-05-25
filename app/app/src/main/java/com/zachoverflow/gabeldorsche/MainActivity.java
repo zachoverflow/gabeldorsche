@@ -39,6 +39,21 @@ public class MainActivity extends Activity {
                 endpointService.sendVibe(vibe);
             }
         });
+
+        final Button disableWifiButton = (Button)findViewById(R.id.disable_wifi_button);
+        final Button enableWifiButton = (Button)findViewById(R.id.enable_wifi_button);
+        View.OnClickListener wifiButtonListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!bound)
+                    return;
+
+                endpointService.setWifiEnabled(view == enableWifiButton);
+            }
+        };
+
+        disableWifiButton.setOnClickListener(wifiButtonListener);
+        enableWifiButton.setOnClickListener(wifiButtonListener);
     }
 
     @Override
