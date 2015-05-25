@@ -11,6 +11,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import java.io.IOException;
@@ -35,6 +36,8 @@ public class EndpointService extends Service {
     private DispatchHandler dispatchHandler;
 
     private LinkedList<Vibe> pendingVibes = new LinkedList<>();
+
+    private NotificationOracle notificationOracle;
 
     public EndpointService() {
     }
@@ -107,6 +110,8 @@ public class EndpointService extends Service {
 
         dispatchLooper = dispatchThread.getLooper();
         dispatchHandler = new DispatchHandler(dispatchLooper);
+
+        notificationOracle = new NotificationOracle();
     }
 
     @Override
@@ -133,6 +138,12 @@ public class EndpointService extends Service {
     public class LocalInterface extends Binder {
         public void sendVibe(Vibe vibe) {
             dispatchHandler.sendMessage(dispatchHandler.obtainMessage(ACTION_VIBE, vibe));
+        }
+
+        public void handleNotification(StatusBarNotification notification) {
+            Vibe vibe = notificationOracle.generateVibeFor(notification);
+            if (vibe != null)
+                sendVibe(vibe);
         }
     }
 }

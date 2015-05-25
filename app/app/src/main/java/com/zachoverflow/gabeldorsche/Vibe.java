@@ -27,6 +27,18 @@ public class Vibe {
             sequences[i] = new Sequence();
     }
 
+    public short getDurationMillis() {
+        short longestDuration = 0;
+
+        for (Sequence sequence : sequences) {
+            short duration = sequence.getDurationMillis();
+            if (duration > longestDuration)
+                longestDuration = duration;
+        }
+
+        return longestDuration;
+    }
+
     public int getSerializedLength() {
         int length = 0;
         for (Sequence sequence : sequences)
@@ -47,9 +59,22 @@ public class Vibe {
     public static class Sequence {
         ArrayList<Step> steps = new ArrayList<>();
 
-        public Sequence add(float value, short duration_ms) {
-            this.steps.add(new Step(value, duration_ms));
+        public Sequence add(float value, short durationMillis) {
+            this.steps.add(new Step(value, durationMillis));
             return this;
+        }
+
+        public Sequence add(Step step) {
+            return this.add(step.value, step.durationMillis);
+        }
+
+        public short getDurationMillis() {
+            short duration = 0;
+
+            for (Step step : steps)
+                duration += step.durationMillis;
+
+            return duration;
         }
 
         private int getSerializedLength() {
@@ -68,16 +93,49 @@ public class Vibe {
         private static final int SERIALIZED_LENGTH = 6;
 
         float value;
-        short duration_ms;
+        short durationMillis;
 
-        public Step(float value, short duration_ms) {
+        public Step(float value, short durationMillis) {
             this.value = value;
-            this.duration_ms = duration_ms;
+            this.durationMillis = durationMillis;
         }
 
         private void serializeTo(ByteBuffer buffer) {
             buffer.putFloat(this.value);
-            buffer.putShort(this.duration_ms);
+            buffer.putShort(this.durationMillis);
         }
+    }
+
+    public static Vibe concatenate(short delayMillis, Vibe... vibes) {
+        Vibe finished = null;
+
+        for (Vibe vibe : vibes) {
+            if (vibe == null)
+                continue;
+
+            if (finished != null) {
+                for (Sequence sequence : finished.sequences)
+                    sequence.add(0.0f, delayMillis);
+            } else {
+                finished = new Vibe();
+            }
+
+            short vibeDurationMillis = vibe.getDurationMillis();
+            for (int i = 0; i < finished.sequences.length; i++) {
+                Sequence finishedSequence = finished.sequences[i];
+                short sequenceDurationMillis = 0;
+
+                for (Step step : vibe.sequences[i].steps) {
+                    finishedSequence.add(step);
+                    sequenceDurationMillis += step.durationMillis;
+                }
+
+                short millisLeft = (short)(vibeDurationMillis - sequenceDurationMillis);
+                if (millisLeft > 0)
+                    finishedSequence.add(0.0f, millisLeft);
+            }
+        }
+
+        return finished;
     }
 }

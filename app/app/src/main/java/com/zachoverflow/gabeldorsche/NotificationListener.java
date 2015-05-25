@@ -1,5 +1,6 @@
 package com.zachoverflow.gabeldorsche;
 
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -39,20 +40,7 @@ public class NotificationListener extends NotificationListenerService {
             return;
         }
 
-        Log.d(LOG_TAG, "got notification");
-
-        Vibe vibe = new Vibe();
-
-        vibe.at(Vibe.Location.FRONT_LEFT)
-                .add(0.5f, (short)200)
-                .add(0.0f, (short)200)
-                .add(0.5f, (short)200);
-
-        vibe.at(Vibe.Location.BACK_LEFT)
-                .add(0.0f, (short)600)
-                .add(0.5f, (short)200);
-
-        endpointService.sendVibe(vibe);
+        endpointService.handleNotification(notification);
     }
 
     private ServiceConnection endpointServiceConnection = new ServiceConnection() {
