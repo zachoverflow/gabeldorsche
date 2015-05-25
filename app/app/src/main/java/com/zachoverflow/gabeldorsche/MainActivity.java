@@ -7,16 +7,12 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.InputType;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -60,8 +56,13 @@ public class MainActivity extends Activity {
             return true;
         } else if (id == R.id.action_enable_wifi) {
             endpointService.setWifiEnabled(true);
+            return true;
         } else if (id == R.id.action_disable_wifi) {
             endpointService.setWifiEnabled(false);
+            return true;
+        } else if (id == R.id.action_recent_notifications) {
+            startActivity(new Intent(this, RecentNotificationsActivity.class));
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

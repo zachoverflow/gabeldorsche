@@ -5,4 +5,5 @@
     <string name="action_enable_wifi">Enable belt WiFi</string>
     <string name="action_disable_wifi">Disable belt WiFi</string>
     <string name="action_recent_notifications">Recent notifications</string>
+    <string name="title_activity_recent_notifications">Recent notifications</string>
 </resources>

@@ -22,6 +22,8 @@ public class NotificationOracle {
     private String urgentRegex;
     private Vibe urgentVibe;
 
+    private RecentNotifications recents;
+
     private static class PackageConfig {
         String name;
         String senderExtra;
@@ -42,21 +44,24 @@ public class NotificationOracle {
         URGENT_PREFIX
     }
 
-    public NotificationOracle() {
+    public NotificationOracle(RecentNotifications recents) {
         packages = new HashMap<>();
         senders = new HashMap<>();
+        this.recents = recents;
         loadFile(CONFIG_FILE);
     }
 
     public Vibe generateVibeFor(StatusBarNotification notification) {
         PackageConfig packageConfig = this.packages.get(notification.getPackageName());
         if (packageConfig == null) {
+            recents.add(notification, false);
             Log.i(LOG_TAG,
                   "Ignoring notification for " + notification.getPackageName()
                     + " extras: " + notification.getNotification().extras.toString());
             return null;
         }
 
+        recents.add(notification, true);
         Log.i(LOG_TAG,
               "Got notification for " + notification.getPackageName()
                 + " extras: " + notification.getNotification().extras.toString());

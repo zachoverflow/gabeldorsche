@@ -26,12 +26,18 @@
             android:name=".EndpointService"
             android:exported="false" >
         </service>
-        <service android:name=".NotificationListener"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+        <service
+            android:name=".NotificationListener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" >
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <activity
+            android:name=".RecentNotificationsActivity"
+            android:label="@string/title_activity_recent_notifications" >
+        </activity>
     </application>
 
 </manifest>

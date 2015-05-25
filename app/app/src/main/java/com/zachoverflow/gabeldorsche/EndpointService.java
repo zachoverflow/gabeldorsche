@@ -41,6 +41,7 @@ public class EndpointService extends Service {
     private LinkedList<Vibe> pendingVibes = new LinkedList<>();
 
     private NotificationOracle notificationOracle;
+    private RecentNotifications recents = new RecentNotifications();
 
     public EndpointService() {
     }
@@ -134,7 +135,7 @@ public class EndpointService extends Service {
         dispatchLooper = dispatchThread.getLooper();
         dispatchHandler = new DispatchHandler(dispatchLooper);
 
-        notificationOracle = new NotificationOracle();
+        notificationOracle = new NotificationOracle(recents);
     }
 
     @Override
@@ -175,7 +176,11 @@ public class EndpointService extends Service {
 
         public void reloadNotificationConfig() {
             Log.i(LOG_TAG, "Reloading notification config...");
-            notificationOracle = new NotificationOracle();
+            notificationOracle = new NotificationOracle(recents);
+        }
+
+        public RecentNotifications getRecentNotifications() {
+            return recents;
         }
     }
 }
