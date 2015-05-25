@@ -5,10 +5,10 @@ import java.util.ArrayList;
 
 public class Vibe {
     public enum Location {
-        FRONT_RIGHT(0),
-        FRONT_LEFT(1),
-        BACK_LEFT(2),
-        BACK_RIGHT(3);
+        FRONT_LEFT(0),
+        FRONT_RIGHT(1),
+        BACK_RIGHT(2),
+        BACK_LEFT(3);
 
         private final int value;
         private Location(int value) {

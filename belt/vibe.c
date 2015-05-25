@@ -25,6 +25,8 @@ typedef struct {
   vibe_sequence_t *sequence;
 } sequence_state_t;
 
+static void enable_pwms(void);
+static void disable_pwms(void);
 static void init_sequence_states(sequence_state_t *states, vibe_t *vibe, time_ms_t start_time);
 static void update_pwm_values(sequence_state_t *states);
 static void update_states(sequence_state_t *states, time_ms_t current_time);
@@ -41,7 +43,6 @@ bool vibe_init(void) {
     }
 
     mraa_pwm_period_ms(pwm[i], PWM_PERIOD_MS);
-    mraa_pwm_enable(pwm[i], 1);
   }
 
   initialized = true;
@@ -66,6 +67,7 @@ void vibe_do(vibe_t *vibe) {
   assert(initialized);
   assert(vibe != NULL);
   
+  enable_pwms();
   sequence_state_t states[VIBE_LOCATIONS_COUNT];
 
   time_ms_t current_time = get_current_ms();
@@ -83,6 +85,23 @@ void vibe_do(vibe_t *vibe) {
     current_time = get_current_ms();
     update_states(states, current_time);
   }
+
+  disable_pwms();
+}
+
+static void enable_pwms(void) {
+  for (int i = 0; i < VIBE_LOCATIONS_COUNT; i++)
+    mraa_pwm_enable(pwm[i], 1);
+}
+
+static void disable_pwms(void) {
+  for (int i = 0; i < VIBE_LOCATIONS_COUNT; i++)
+    mraa_pwm_write(pwm[i], 0.0f);
+
+  sleep_for_ms(50);
+
+  for (int i = 0; i < VIBE_LOCATIONS_COUNT; i++)
+    mraa_pwm_enable(pwm[i], 0);
 }
 
 static void init_sequence_states(sequence_state_t *states, vibe_t *vibe, time_ms_t start_time) {
