@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NotificationOracle {
     private static final String LOG_TAG = "Gabeldorsche";
@@ -22,6 +24,7 @@ public class NotificationOracle {
     private static class PackageConfig {
         String name;
         String senderExtra;
+        String senderRegex;
         String textExtra;
         Vibe vibe;
     }
@@ -58,8 +61,21 @@ public class NotificationOracle {
                 + " extras: " + notification.getNotification().extras.toString());
 
         Bundle extras = notification.getNotification().extras;
-        String sender = extras.get(packageConfig.senderExtra).toString();
-        String text = extras.get(packageConfig.textExtra).toString();
+        String sender = null;
+        if (packageConfig.senderExtra != null) {
+            sender = extras.get(packageConfig.senderExtra).toString();
+            if (packageConfig.senderRegex != null) {
+                Matcher matcher = Pattern.compile(packageConfig.senderRegex).matcher(sender);
+                if (matcher.find())
+                    sender = matcher.group(1);
+                else
+                    sender = null;
+            }
+        }
+
+        String text = null;
+        if (packageConfig.textExtra != null)
+            text = extras.get(packageConfig.textExtra).toString();
 
         Vibe prefixVibe = null;
         if (text != null && text.matches(this.urgentRegex)) {
@@ -68,10 +84,12 @@ public class NotificationOracle {
         }
 
         Vibe senderVibe = null;
-        SenderConfig senderConfig = senders.get(sender.trim());
-        if (senderConfig != null) {
-            senderVibe = senderConfig.vibe;
-            Log.i(LOG_TAG, "notification has matching sender");
+        if (sender != null) {
+            SenderConfig senderConfig = senders.get(sender.trim());
+            if (senderConfig != null) {
+                senderVibe = senderConfig.vibe;
+                Log.i(LOG_TAG, "notification has matching sender: " + senderConfig.name);
+            }
         }
 
         return Vibe.concatenate(CONCATENATE_DELAY_MS, prefixVibe, packageConfig.vibe, senderVibe);
@@ -151,6 +169,7 @@ public class NotificationOracle {
         config.name = line.substring(1, line.length() - 1);
 
         final String SENDER_KEY = ":sender=";
+        final String SENDER_REGEX_KEY = ":sender-regex=";
         final String TEXT_KEY = ":text=";
 
         // Read out the config options
@@ -158,6 +177,8 @@ public class NotificationOracle {
             line = line.trim();
             if (line.startsWith(SENDER_KEY))
                 config.senderExtra = line.substring(SENDER_KEY.length());
+            else if (line.startsWith(SENDER_REGEX_KEY))
+                config.senderRegex = line.substring(SENDER_REGEX_KEY.length());
             else if (line.startsWith(TEXT_KEY))
                 config.textExtra = line.substring(TEXT_KEY.length());
             else
