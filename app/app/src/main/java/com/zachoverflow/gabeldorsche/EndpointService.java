@@ -172,5 +172,10 @@ public class EndpointService extends Service {
         public void setWifiEnabled(boolean value) {
             dispatchHandler.sendMessage((dispatchHandler.obtainMessage(ACTION_SET_WIFI_ENABLED, value)));
         }
+
+        public void reloadNotificationConfig() {
+            Log.i(LOG_TAG, "Reloading notification config...");
+            notificationOracle = new NotificationOracle();
+        }
     }
 }

@@ -12,8 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NotificationOracle {
+    public static final String CONFIG_FILE = "/sdcard/gabeldorsche.config";
+
     private static final String LOG_TAG = "Gabeldorsche";
-    private static final String CONFIG_FILE = "/sdcard/gabeldorsche.config";
     private static final short CONCATENATE_DELAY_MS = 500;
 
     private HashMap<String, PackageConfig> packages;

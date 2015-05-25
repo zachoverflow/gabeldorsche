@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Gabeldorsche</string>
+
+    <string name="action_test">Send test vibration</string>
+    <string name="action_enable_wifi">Enable belt WiFi</string>
+    <string name="action_disable_wifi">Disable belt WiFi</string>
+    <string name="action_recent_notifications">Recent notifications</string>
 </resources>
