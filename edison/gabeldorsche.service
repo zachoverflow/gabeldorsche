@@ -1,0 +1,10 @@
+[Unit]
+Description=The gabeldorsche belt daemon
+After=init_gpios.service
+
+[Service]
+Type=idle
+ExecStart=/home/root/belt/beltd
+
+[Install]
+WantedBy=multi-user.target
