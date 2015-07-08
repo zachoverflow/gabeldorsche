@@ -55,16 +55,11 @@ public class NotificationOracle {
         PackageConfig packageConfig = this.packages.get(notification.getPackageName());
         if (packageConfig == null) {
             recents.add(notification, false);
-            Log.i(LOG_TAG,
-                  "Ignoring notification for " + notification.getPackageName()
-                    + " extras: " + notification.getNotification().extras.toString());
+            Log.i(LOG_TAG, "Ignoring notification for " + notification.getPackageName());
             return null;
         }
 
         recents.add(notification, true);
-        Log.i(LOG_TAG,
-              "Got notification for " + notification.getPackageName()
-                + " extras: " + notification.getNotification().extras.toString());
 
         Bundle extras = notification.getNotification().extras;
         String sender = null;
