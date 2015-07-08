@@ -32,6 +32,11 @@ public class EndpointService extends Service {
 
     private static final UUID GABELDORSCHE_UUID = UUID.fromString("9bd5b148-9249-542a-43be-d1b5f073f928");
 
+    private static final int MAX_CONNECT_TRY = 3;
+    private static final int CONNECT_RETRY_DELAY_MILLIS = 50;
+
+    private static final int MAX_VIBE_SEND_ATTEMPTS = 2;
+
     private Binder binder = new LocalInterface();
 
     private BluetoothSocket socket;
@@ -74,7 +79,10 @@ public class EndpointService extends Service {
         }
 
         private void ensureSocketUp() {
-            if (socket == null) {
+            if (socket != null)
+                return;
+
+            for (int i = 0; i < MAX_CONNECT_TRY; i++) {
                 // TODO(zachoverflow): don't assume the device is the one with "edison" in it
                 BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -89,40 +97,66 @@ public class EndpointService extends Service {
                 adapter.cancelDiscovery();
                 try {
                     socket = peer.createRfcommSocketToServiceRecord(GABELDORSCHE_UUID);
-                    socket.connect();
+                    if (socket != null) {
+                        // Woot! Found it, so connect and then we're done here
+                        socket.connect();
+                        break;
+                    }
                 } catch (IOException e) {
                     Log.e(LOG_TAG, "Error opening socket to peer: " + e.getMessage());
+                }
+
+                try {
+                    Log.i(LOG_TAG, "Could not connect. Retrying in " + CONNECT_RETRY_DELAY_MILLIS + " milliseconds");
+                    Thread.sleep(CONNECT_RETRY_DELAY_MILLIS);
+                } catch (InterruptedException e) {
+                    Log.e(LOG_TAG, "Error sleeping to retry connection: " + e.getMessage());
                 }
             }
         }
 
         private boolean sendByteBuffer(ByteBuffer buffer) {
-             try {
-                 OutputStream outStream = socket.getOutputStream();
-                 outStream.write(buffer.array(), 0, buffer.position());
-                 outStream.flush();
+            if (socket == null) {
+                Log.e(LOG_TAG, "Can't send bytes because socket is not open.");
+                return false;
+            }
 
-                 return true;
-             } catch (IOException e) {
-                 Log.e(LOG_TAG, "Error writing peer socket: " + e.getMessage());
-                 closeSocket();
-             }
+            try {
+                OutputStream outStream = socket.getOutputStream();
+                outStream.write(buffer.array(), 0, buffer.position());
+                outStream.flush();
+
+                return true;
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Error writing peer socket: " + e.getMessage());
+                closeSocket();
+            }
 
             return false;
         }
 
         private void submitPendingVibes() {
-            ensureSocketUp();
+            for (int i = 0; i < MAX_VIBE_SEND_ATTEMPTS; i++) {
+                ensureSocketUp();
 
-            while (pendingVibes.size() > 0) {
-                Vibe vibe = pendingVibes.element();
+                boolean success = true;
+                while (pendingVibes.size() > 0) {
+                    Vibe vibe = pendingVibes.element();
 
-                ByteBuffer buffer = ByteBuffer.allocate(vibe.getSerializedLength() + 1);
-                buffer.put(OPCODE_VIBRATE);
-                vibe.serializeTo(buffer);
+                    ByteBuffer buffer = ByteBuffer.allocate(vibe.getSerializedLength() + 1);
+                    buffer.put(OPCODE_VIBRATE);
+                    vibe.serializeTo(buffer);
 
-                if (sendByteBuffer(buffer))
+                    if (!sendByteBuffer(buffer)) {
+                        success = false;
+                        break;
+                    }
+
                     pendingVibes.remove();
+                }
+
+                if (success)
+                    return;
             }
         }
     }
