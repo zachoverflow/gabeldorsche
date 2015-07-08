@@ -95,6 +95,8 @@ static void enable_pwms(void) {
 }
 
 static void disable_pwms(void) {
+  sleep_for_ms(100);
+
   for (int i = 0; i < VIBE_LOCATIONS_COUNT; i++)
     mraa_pwm_write(pwm[i], 0.0f);
 
